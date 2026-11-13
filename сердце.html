@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Я люблю тебя, чонм</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marck+Script&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07040c;
+    --bg-glow: #1a0a1f;
+    --glow: #720a2d;
+    --glow-soft: #2e121c;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: radial-gradient(ellipse at center, var(--bg-glow) 0%, var(--bg) 70%);
+    overflow: hidden;
+    font-family: "Marck Script", "Segoe Script", cursive;
+  }
+  .stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .heart {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(46vmin, 360px);
+    transform: translate(-50%, -50%);
+    animation: beat 2.4s ease-in-out infinite;
+    z-index: 2;
+  }
+  .heart svg { width: 100%; height: auto; overflow: visible; display: block; }
+  .heart path {
+    fill: #000;
+    stroke: var(--glow);
+    stroke-width: 3;
+    stroke-linejoin: round;
+    filter:
+      drop-shadow(0 0 6px var(--glow))
+      drop-shadow(0 0 18px var(--glow))
+      drop-shadow(0 0 42px rgba(90, 11, 37, 0.7));
+  }
+  @keyframes beat {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    14%      { transform: translate(-50%, -50%) scale(1.07); }
+    28%      { transform: translate(-50%, -50%) scale(1); }
+    42%      { transform: translate(-50%, -50%) scale(1.045); }
+    70%      { transform: translate(-50%, -50%) scale(1); }
+  }
+  .word {
+    position: absolute;
+    left: 0;
+    top: 0;
+    white-space: nowrap;
+    color: #fff;
+    font-size: clamp(18px, 4.2vmin, 34px);
+    text-shadow:
+      0 0 4px #fff,
+      0 0 12px var(--glow-soft),
+      0 0 26px var(--glow),
+      0 0 48px var(--glow);
+    will-change: transform, opacity;
+    pointer-events: none;
+    user-select: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .heart { animation: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="heart" aria-hidden="true">
+      <svg viewBox="0 0 100 90">
+        <path d="M50 86 C 20 62, 4 44, 4 26 C 4 12, 15 3, 28 3 C 38 3, 46 8, 50 16 C 54 8, 62 3, 72 3 C 85 3, 96 12, 96 26 C 96 44, 80 62, 50 86 Z"/>
+      </svg>
+    </div>
+  </div>
+
+<script>
+  const TEXT = "я люблю тебя,чонм";   // <- здесь можно поменять надпись
+  const COUNT = 100;                  // сколько слов летает
+  const stage = document.getElementById("stage");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const words = [];
+  for (let i = 0; i < COUNT; i++) {
+    const el = document.createElement("div");
+    el.className = "word";
+    el.textContent = TEXT;
+    stage.appendChild(el);
+    words.push({
+      el,
+      angle: (i / COUNT) * Math.PI * 2,
+      speed: (0.00018 + Math.random() * 0.00022) * (i % 2 ? 1 : -1),
+      rx: 0.62 + Math.random() * 0.3,   // доля ширины экрана
+      ry: 0.5 + Math.random() * 0.3,    // доля высоты экрана
+      tilt: (Math.random() - 0.5) * 0.6,
+      wobble: Math.random() * Math.PI * 2
+    });
+  }
+
+  function frame(t) {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    const cx = w / 2, cy = h / 2;
+    for (const o of words) {
+      const a = o.angle + (reduced ? 0 : t * o.speed);
+      const rx = (w / 2) * o.rx * 0.85;
+      const ry = (h / 2) * o.ry * 0.8 + Math.sin(t * 0.0008 + o.wobble) * 14;
+      let x = Math.cos(a) * rx;
+      let y = Math.sin(a) * ry;
+      // небольшой наклон орбиты
+      const xr = x * Math.cos(o.tilt) - y * Math.sin(o.tilt);
+      const yr = x * Math.sin(o.tilt) + y * Math.cos(o.tilt);
+      const depth = (Math.sin(a) + 1) / 2;          // 0..1 — "ближе/дальше"
+      const scale = 0.7 + depth * 0.5;
+      o.el.style.opacity = 0.35 + depth * 0.65;
+      o.el.style.transform =
+        `translate(${cx + xr}px, ${cy + yr}px) translate(-50%, -50%) scale(${scale})`;
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>
